@@ -13,3 +13,9 @@ class InstagramPost(models.Model):
     likes_count = models.IntegerField()
     comments_count = models.IntegerField()
     created_datetime = models.DateTimeField(db_index=True)
+
+
+class InstagramData(models.Model):
+
+    user = models.OneToOneField(InstagramUser, primary_key=True)
+    data = models.TextField()

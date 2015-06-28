@@ -14,4 +14,4 @@ class InstagramPostSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = InstagramPost
-        fields = ('created_datetime', 'likes_count', 'comments_count')
+        fields = ('caption', 'created_datetime', 'likes_count', 'comments_count')
