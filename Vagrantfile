@@ -30,7 +30,11 @@ export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
 export WORKON_HOME=/opt/virtualenvs/
 source /usr/local/bin/virtualenvwrapper.sh 
 workon squad-api
-cd /opt/squad-api/squadapi && uwsgi --ini /opt/squad-api/uwsgi.ini 
+cd /opt/squad-api/squadapi
+python manage.py migrate
+python manage.py loaddata socialdata.json
+python manage.py collectstatic --noinput
+uwsgi --ini /opt/squad-api/uwsgi.ini 
 SCRIPT
 
 Vagrant.configure(2) do |config|
