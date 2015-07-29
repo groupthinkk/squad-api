@@ -63,3 +63,9 @@ reload
 
 # vim
 *.swp
+
+# sqlite
+*.sqlite*
+
+# static assets
+static/
