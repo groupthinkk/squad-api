@@ -13,18 +13,28 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Post',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, primary_key=True, verbose_name='ID')),
+                ('post_id', models.CharField(max_length=64, unique=True)),
                 ('caption', models.TextField()),
-                ('likes_count', models.IntegerField()),
-                ('comments_count', models.IntegerField()),
+                ('image_url', models.URLField()),
+                ('likes_count', models.IntegerField(default=0)),
+                ('comments_count', models.IntegerField(default=0)),
                 ('created_datetime', models.DateTimeField(db_index=True)),
             ],
         ),
         migrations.CreateModel(
             name='User',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('username', models.CharField(max_length=64)),
+                ('id', models.AutoField(auto_created=True, serialize=False, primary_key=True, verbose_name='ID')),
+                ('user_id', models.CharField(max_length=64, default='', blank=True)),
+                ('username', models.CharField(max_length=64, unique=True)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Normalization',
+            fields=[
+                ('user', models.OneToOneField(serialize=False, to='instagram.User', primary_key=True)),
+                ('data', models.TextField()),
             ],
         ),
         migrations.AddField(

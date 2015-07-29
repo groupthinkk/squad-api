@@ -60,6 +60,7 @@ target/
 # Vagrant
 .vagrant
 reload
+reload-celery
 
 # vim
 *.swp

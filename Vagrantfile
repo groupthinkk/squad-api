@@ -34,7 +34,7 @@ source /usr/local/bin/virtualenvwrapper.sh
 workon squad-api
 cd /opt/squad-api/squadapi
 python manage.py migrate
-python manage.py loaddata auth.json
+python manage.py loaddata users.json
 python manage.py collectstatic --noinput
 uwsgi --ini /opt/squad-api/uwsgi.ini 
 SCRIPT
