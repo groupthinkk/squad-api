@@ -12,6 +12,19 @@ $ vagrant up
 
 The app will now be accessible at `localhost:9991`
 
+#### Admin
+Navigating to http://127.0.0.1:9991/admin/ will allow you to login to the admin interface. A superuser is already setup with the following credentials:
+```
+username: squad
+password: squadgoals
+```
+
+##### Instagram Users
+Once you're logged in, you'll be able to add Instagram users by username. This will automatically validate the user and pull in relevant information from the Instagram API. The user admin panel can be found at http://127.0.0.1:9991/admin/instagram/user/.
+
+##### Instagram Posts
+A user's posts can be pulled in using a background process by selecting the user and selecting the "Update user posts" action, then clicking "Go". Check out the posts coming in in realtime by navigating to http://127.0.0.1:9991/admin/instagram/post/.
+
 #### API
 The following API methods are currently available:
 - `GET /api/v0/instagram/users` lists all Instagram users
