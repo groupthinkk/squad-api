@@ -11,6 +11,8 @@ sudo apt-get install -y python3-pip
 sudo mkdir /opt/virtualenvs
 sudo chown vagrant:vagrant /opt/virtualenvs/
 
+sudo apt-get install -y rabbitmq-server
+
 pip3 install virtualenvwrapper
 export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
 export WORKON_HOME=/opt/virtualenvs/
@@ -32,7 +34,7 @@ source /usr/local/bin/virtualenvwrapper.sh
 workon squad-api
 cd /opt/squad-api/squadapi
 python manage.py migrate
-python manage.py loaddata _instagram.json
+python manage.py loaddata auth.json
 python manage.py collectstatic --noinput
 uwsgi --ini /opt/squad-api/uwsgi.ini 
 SCRIPT
