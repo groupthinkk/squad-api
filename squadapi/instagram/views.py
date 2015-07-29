@@ -9,33 +9,33 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .models import InstagramUser, InstagramPost, InstagramData
-from .serializers import InstagramUserSerializer, InstagramPostSerializer
+from .models import User, Post, Normalization
+from .serializers import UserSerializer, PostSerializer
 
 
-class InstagramUserList(generics.ListAPIView):
+class UserList(generics.ListAPIView):
 
-    queryset = InstagramUser.objects.all()
-    serializer_class = InstagramUserSerializer
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
     paginate_by = 25
 
 
-class InstagramPostList(generics.ListAPIView):
+class PostList(generics.ListAPIView):
 
-    queryset = InstagramPost.objects.all()
-    serializer_class = InstagramPostSerializer
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
     paginate_by = 25
 
 
-class InstagramPostRandom(APIView):
+class PostRandom(APIView):
 
     def get(self, request, format=None):
-        user = InstagramUser.objects.order_by('?').first()
-        post = InstagramPost.objects.filter(
+        user = User.objects.order_by('?').first()
+        post = Post.objects.filter(
             user=user,
             created_datetime__gt=datetime(2014, 1, 1),
         ).order_by('?').first()
-        data = json.loads(InstagramData.objects.get(user=user).data)
+        data = json.loads(Normalization.objects.get(user=user).data)
 
         post_bucket = '{:02d}-{:02d}'.format(
             post.created_datetime.weekday(),

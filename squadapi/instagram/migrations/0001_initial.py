@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='InstagramPost',
+            name='Post',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('caption', models.TextField()),
@@ -21,15 +21,15 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='InstagramUser',
+            name='User',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('username', models.CharField(max_length=64)),
             ],
         ),
         migrations.AddField(
-            model_name='instagrampost',
+            model_name='post',
             name='user',
-            field=models.ForeignKey(to='socialdata.InstagramUser'),
+            field=models.ForeignKey(to='instagram.User'),
         ),
     ]

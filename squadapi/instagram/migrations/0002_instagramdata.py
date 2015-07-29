@@ -7,14 +7,14 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('socialdata', '0001_initial'),
+        ('instagram', '0001_initial'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='InstagramData',
+            name='Normalization',
             fields=[
-                ('user', models.OneToOneField(primary_key=True, serialize=False, to='socialdata.InstagramUser')),
+                ('user', models.OneToOneField(primary_key=True, serialize=False, to='instagram.User')),
                 ('data', models.TextField()),
             ],
         ),

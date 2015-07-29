@@ -1,17 +1,17 @@
 from rest_framework import serializers
 
-from .models import InstagramUser, InstagramPost
+from .models import User, Post
 
 
-class InstagramUserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
-        model = InstagramUser
+        model = User
         fields = ('id', 'username')
 
 
-class InstagramPostSerializer(serializers.HyperlinkedModelSerializer):
+class PostSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
-        model = InstagramPost
+        model = Post
         fields = ('caption', 'created_datetime', 'likes_count', 'comments_count')
