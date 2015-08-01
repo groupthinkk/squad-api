@@ -1,7 +1,7 @@
 from django import forms
 
 from .models import User
-from .collect import find_user
+from .collect import find_user, get_user
 
 
 class UserAdminForm(forms.ModelForm):
@@ -22,11 +22,16 @@ class UserAdminForm(forms.ModelForm):
                 'No user found with username "{0}".'.format(username)
             )
 
+        user = get_user(user['id'])
+
         self.cleaned_data['user_id'] = user['id']
+        self.cleaned_data['username'] = user['username']
+        self.cleaned_data['followers'] = user['counts']['followed_by']
 
     def save(self, **kwargs):
         user = super(UserAdminForm, self).save(commit=False)
         user.user_id = self.cleaned_data['user_id']
+        user.followers = self.cleaned_data['followers']
 
         if kwargs.get('commit'):
             user.save()

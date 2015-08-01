@@ -4,10 +4,19 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from .models import User, Post
-from .collect import get_posts
+from .collect import get_user, get_posts
 
 
 logger = get_task_logger(__name__)
+
+
+@shared_task
+def update_user(user):
+    user_data = get_user(user.user_id)
+
+    user.username = user_data['username']
+    user.followers = user_data['counts']['followed_by']
+    user.save()
 
 
 @shared_task

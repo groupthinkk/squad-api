@@ -5,6 +5,7 @@ class User(models.Model):
 
     user_id = models.CharField(max_length=64, default='', blank=True)
     username = models.CharField(max_length=64, unique=True)
+    followers = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return self.username

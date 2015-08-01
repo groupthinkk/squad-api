@@ -20,8 +20,19 @@ def find_user(username):
     data = r.json()['data']
 
     for user in data:
-        if user['username'] == username:
+        if user['username'].lower() == username.lower():
             return user
+
+
+def get_user(user_id):
+    r = requests.get(
+        urljoin(URL, 'users/{0}'.format(user_id)),
+        params={
+            'client_id': CLIENT_ID,
+        },
+    )
+
+    return r.json()['data']
 
 
 def get_posts(user_id):
