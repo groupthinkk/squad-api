@@ -7,11 +7,20 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username')
+        fields = ('user_id', 'username', 'followers')
 
 
 class PostSerializer(serializers.HyperlinkedModelSerializer):
 
+    user = serializers.StringRelatedField()
+
     class Meta:
         model = Post
-        fields = ('caption', 'created_datetime', 'likes_count', 'comments_count')
+        fields = (
+            'user',
+            'caption',
+            'image_url',
+            'likes_count',
+            'comments_count',
+            'created_datetime',
+        )

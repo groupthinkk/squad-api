@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import User, Post, Normalization
-from .tasks import update_user, update_all_posts
+from .tasks import update_user, update_all_posts, update_normalization_data
 from .forms import UserAdminForm
 
 
@@ -12,7 +12,11 @@ def _task_message(n):
 class UserAdmin(admin.ModelAdmin):
 
     form = UserAdminForm
-    actions = ['update_user_data', 'update_user_posts']
+    actions = [
+        'update_user_data',
+        'update_user_posts',
+        'update_normalization_data',
+    ]
     list_display = ['id', 'username', 'user_id', 'followers']
 
     def update_user_data(self, request, queryset):
@@ -29,6 +33,13 @@ class UserAdmin(admin.ModelAdmin):
         ntasks = len([t for t in tasks if t])
         self.message_user(request, _task_message(ntasks))
 
+    def update_normalization_data(self, request, queryset):
+        tasks = []
+        for user in queryset:
+            tasks.append(update_normalization_data.delay(user))
+        ntasks = len([t for t in tasks if t])
+        self.message_user(request, _task_message(ntasks))
+
 admin.site.register(User, UserAdmin)
 
 
@@ -36,6 +47,14 @@ class PostAdmin(admin.ModelAdmin):
 
     list_display = ['image_tag', 'user', 'caption', 'created_datetime']
     list_filter = ['user']
+    ordering = ['-created_datetime']
 
 admin.site.register(Post, PostAdmin)
-admin.site.register(Normalization)
+
+
+class NormalizationAdmin(admin.ModelAdmin):
+
+    list_display = ['user']
+    list_filter = ['user']
+
+admin.site.register(Normalization, NormalizationAdmin)

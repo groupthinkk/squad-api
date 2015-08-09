@@ -1,4 +1,5 @@
 import json
+import random
 
 from collections import OrderedDict
 from datetime import datetime
@@ -22,39 +23,72 @@ class UserList(generics.ListAPIView):
 
 class PostList(generics.ListAPIView):
 
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().order_by('-created_datetime')
     serializer_class = PostSerializer
     paginate_by = 25
+
+    def get_queryset(self):
+        if 'username' in self.request.query_params:
+            return self.queryset.filter(
+                user__username=self.request.query_params['username'],
+            )
+        return self.queryset
+
+
+def _format_post(post):
+    return OrderedDict([
+        ('username', post.user.username),
+        ('caption', post.caption),
+        ('image_url', post.image_url),
+        ('likes_count', post.likes_count),
+        ('comments_count', post.comments_count),
+        ('created_datetime', post.created_datetime),
+    ])
 
 
 class PostRandom(APIView):
 
     def get(self, request, format=None):
-        user = User.objects.order_by('?').first()
-        post = Post.objects.filter(
+        queryset = Normalization.objects
+
+        if 'username' in request.GET:
+            print(request.GET)
+            queryset = queryset.filter(user__username=request.GET['username'])
+
+        try:
+            normalization = queryset.order_by('?').first()
+        except Normalization.DoesNotExist:
+            return Response()
+
+        user = normalization.user
+        data = json.loads(normalization.data)
+        year = random.choice(list(data.keys()))
+
+        posts = Post.objects.filter(
             user=user,
-            created_datetime__gt=datetime(2014, 1, 1),
-        ).order_by('?').first()
-        data = json.loads(Normalization.objects.get(user=user).data)
+            created_datetime__year=int(year),
+        ).order_by('?')
 
-        post_bucket = '{:02d}-{:02d}'.format(
-            post.created_datetime.weekday(),
-            post.created_datetime.hour,
-        )
+        exclude = []
 
-        bucket = data['buckets'][post_bucket]
+        if 'exclude' in request.GET:
+            exclude = request.GET['exclude'].split(',')
 
-        stdev_away = (post.likes_count - bucket['average']) / bucket['stdev']
+        post_0 = posts.exclude(post_id__in=exclude).first()
 
-        estimates = {}
-        for k, v in data['buckets'].items():
-            estimates[k] = max(int(v['average'] + v['stdev'] * stdev_away), 0)
+        threshold = data[year]['stdev'] / 2
+
+        for post in posts.exclude(post_id=post_0.id):
+            if not post_0:
+                post_0 = post
+                continue
+
+            if abs(post_0.likes_count - post.likes_count) > threshold:
+                post_1 = post
+                break
 
         return Response(OrderedDict([
-            ('username', user.username),
-            ('caption', post.caption),
-            ('created_datetime', post.created_datetime),
-            ('likes_count', post.likes_count),
-            ('comments_count', post.comments_count),
-            ('estimates', OrderedDict(sorted(estimates.items(), key=lambda t: t[0]))),
+            ('id', post_0.post_id),
+            ('posts', [map(_format_post, [post_0, post_1])]),
+            ('normalization', OrderedDict(sorted(data.items(), key=lambda t: t[0]))),
         ]))
