@@ -9,9 +9,21 @@ from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import BasePermission
 
 from .models import User, Post, Normalization
 from .serializers import UserSerializer, PostSerializer
+
+
+API_KEYS = (
+    'CazMCDN5G2SuFhET3BuXdLIW01PQxisNLwKRIw',
+)
+
+
+class APIKeyPermission(BasePermission):
+
+    def has_permission(self, request, view):
+        return request.GET.get('api_key') in API_KEYS
 
 
 class UserList(generics.ListAPIView):
@@ -19,6 +31,7 @@ class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     paginate_by = 25
+    permission_classes = [APIKeyPermission]
 
 
 class PostList(generics.ListAPIView):
@@ -26,6 +39,7 @@ class PostList(generics.ListAPIView):
     queryset = Post.objects.all().order_by('-created_datetime')
     serializer_class = PostSerializer
     paginate_by = 25
+    permission_classes = [APIKeyPermission]
 
     def get_queryset(self):
         if 'username' in self.request.query_params:
@@ -47,6 +61,8 @@ def _format_post(post):
 
 
 class PostRandom(APIView):
+
+    permission_classes = [APIKeyPermission]
 
     def get(self, request, format=None):
         if 'username' in request.GET:
