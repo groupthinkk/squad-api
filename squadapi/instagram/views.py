@@ -2,7 +2,7 @@ import json
 import random
 
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.shortcuts import render
 
@@ -49,46 +49,38 @@ def _format_post(post):
 class PostRandom(APIView):
 
     def get(self, request, format=None):
-        queryset = Normalization.objects
-
         if 'username' in request.GET:
-            print(request.GET)
-            queryset = queryset.filter(user__username=request.GET['username'])
-
-        try:
-            normalization = queryset.order_by('?').first()
-        except Normalization.DoesNotExist:
-            return Response()
-
-        user = normalization.user
-        data = json.loads(normalization.data)
-        year = random.choice(list(data.keys()))
-
-        posts = Post.objects.filter(
-            user=user,
-            created_datetime__year=int(year),
-        ).order_by('?')
+            try:
+                user = User.objects.get(username=request.GET['username'])
+            except User.DoesNotExist:
+                return Response()
+        else:
+            users = User.objects
+            user = users.all()[random.randint(0, users.count() - 1)]
 
         exclude = []
 
         if 'exclude' in request.GET:
             exclude = request.GET['exclude'].split(',')
 
-        post_0 = posts.exclude(post_id__in=exclude).first()
+        posts = Post.objects.filter(user=user).exclude(post_id__in=exclude)
 
-        threshold = data[year]['stdev'] / 2
+        post0 = posts.all()[random.randint(0, posts.count() - 1)]
 
-        for post in posts.exclude(post_id=post_0.id):
-            if not post_0:
-                post_0 = post
-                continue
+        since = post0.created_datetime - timedelta(weeks=1)
+        until = post0.created_datetime + timedelta(weeks=1)
 
-            if abs(post_0.likes_count - post.likes_count) > threshold:
-                post_1 = post
+        for post1 in posts.filter(
+            created_datetime__lt=until,
+            created_datetime__gte=since,
+        ).exclude(post_id=post0.post_id):
+            l0 = post0.likes_count
+            l1 = post1.likes_count
+
+            if 5 <= abs((l0 - l1) / l0 * 100) < 50:
                 break
 
         return Response(OrderedDict([
-            ('id', post_0.post_id),
-            ('posts', [map(_format_post, [post_0, post_1])]),
-            ('normalization', OrderedDict(sorted(data.items(), key=lambda t: t[0]))),
+            ('id', post0.post_id),
+            ('posts', [map(_format_post, [post0, post1])]),
         ]))
