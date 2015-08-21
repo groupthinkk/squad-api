@@ -23,7 +23,10 @@ API_KEYS = (
 class APIKeyPermission(BasePermission):
 
     def has_permission(self, request, view):
-        return request.GET.get('api_key') in API_KEYS
+        return (
+            request.GET.get('api_key') in API_KEYS or
+            request.POST.get('api_key') in API_KEYS
+        )
 
 
 class UserList(generics.ListAPIView):
@@ -64,20 +67,15 @@ class PostRandom(APIView):
 
     permission_classes = [APIKeyPermission]
 
-    def get(self, request, format=None):
-        if 'username' in request.GET:
+    def get_random_post(self, username=None, exclude=[]):
+        if username is not None:
             try:
-                user = User.objects.get(username=request.GET['username'])
+                user = User.objects.get(username=username)
             except User.DoesNotExist:
                 return Response()
         else:
             users = User.objects
             user = users.all()[random.randint(0, users.count() - 1)]
-
-        exclude = []
-
-        if 'exclude' in request.GET:
-            exclude = request.GET['exclude'].split(',')
 
         posts = Post.objects.filter(user=user).exclude(post_id__in=exclude)
 
@@ -100,3 +98,26 @@ class PostRandom(APIView):
             ('id', post0.post_id),
             ('posts', [map(_format_post, [post0, post1])]),
         ]))
+
+    def get(self, request, format=None):
+        username = None
+        if 'username' in request.GET:
+            username=request.GET['username']
+
+        exclude = []
+
+        if 'exclude' in request.GET:
+            exclude = request.GET['exclude'].split(',')
+
+        return self.get_random_post(username, exclude)
+
+    def post(self, request, format=None):
+        username = None
+        if 'username' in request.POST:
+            username = request.POST['username']
+
+        exclude = []
+        if 'exclude' in request.POST:
+            exclude = request.POST['exclude'].split(',')
+
+        return self.get_random_post(username, exclude)
