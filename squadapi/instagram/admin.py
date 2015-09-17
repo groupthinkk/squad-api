@@ -1,6 +1,10 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
-from .models import User, Post, Normalization
+from .models import (
+    User, Post, PostComparison, PostComparisonQueue, PostComparisonQueueMember,
+)
 from .tasks import update_user, update_all_posts, update_normalization_data
 from .forms import UserAdminForm
 
@@ -48,13 +52,69 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ['image_tag', 'user', 'caption', 'created_datetime']
     list_filter = ['user']
     ordering = ['-created_datetime']
+    actions = [
+        'create_comparison',
+    ]
+
+    def create_comparison(self, request, queryset):
+        if queryset.count() != 2:
+            self.message_user(
+                request,
+                'Exactly two posts must be selected to create a comparison.',
+                level=messages.ERROR,
+            )
+            return
+
+        post_a, post_b = list(queryset)
+        comparison = PostComparison(post_a=post_a, post_b=post_b)
+
+        try:
+            comparison.clean()
+        except ValidationError as ve:
+            self.message_user(request, '\n'.join(ve), level=messages.ERROR)
+            return
+
+        try:
+            comparison.save()
+        except IntegrityError:
+            self.message_user(
+                request,
+                'Comparison already exists!',
+                level=messages.ERROR,
+            )
+            return
+
+        self.message_user(
+            request,
+            'Comparison created!',
+            level=messages.SUCCESS,
+        )
+
 
 admin.site.register(Post, PostAdmin)
 
 
-class NormalizationAdmin(admin.ModelAdmin):
+class PostComparisonAdmin(admin.ModelAdmin):
 
-    list_display = ['user']
+    list_display = ['user', 'post_a_summary', 'post_b_summary']
     list_filter = ['user']
 
-admin.site.register(Normalization, NormalizationAdmin)
+    def has_add_permission(self, request):
+        return False
+
+admin.site.register(PostComparison, PostComparisonAdmin)
+
+
+class PostComparisonQueueMemberInline(admin.TabularInline):
+
+    model = PostComparisonQueueMember
+    extra = 1
+    ordering = ['position']
+
+
+class PostComparisonQueueAdmin(admin.ModelAdmin):
+
+    list_display = ['name']
+    inlines = [PostComparisonQueueMemberInline]
+
+admin.site.register(PostComparisonQueue, PostComparisonQueueAdmin)
