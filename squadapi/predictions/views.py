@@ -32,6 +32,7 @@ class TurkerList(generics.ListCreateAPIView):
     serializer_class = TurkerSerializer
     paginate_by = 25
     permission_classes = [APIKeyPermission]
+    filter_fields = ['turker_id']
 
     def perform_create(self, serializer):
         queue = Turker.instagram_queue.get_queryset().first()
