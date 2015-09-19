@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 class User(models.Model):
 
-    user_id = models.CharField(max_length=64, default='', blank=True)
+    user_id = models.CharField(max_length=64, default='', blank=True, unique=True)
     username = models.CharField(max_length=64, unique=True)
     followers = models.IntegerField(blank=True, null=True)
 
@@ -27,6 +27,9 @@ class Post(models.Model):
     image_tag.allow_tags = True
     image_tag.short_description = 'Image'
 
+    def __str__(self):
+        return self.post_id
+
 
 class Normalization(models.Model):
 
@@ -37,8 +40,8 @@ class Normalization(models.Model):
 class PostComparison(models.Model):
 
     user = models.ForeignKey(User)
-    post_a = models.ForeignKey(Post, to_field='post_id', related_name='post_a')
-    post_b = models.ForeignKey(Post, to_field='post_id', related_name='post_b')
+    post_a = models.ForeignKey(Post, related_name='post_a')
+    post_b = models.ForeignKey(Post, related_name='post_b')
 
     class Meta:
         unique_together = ('post_a', 'post_b')
@@ -72,12 +75,7 @@ class PostComparison(models.Model):
     post_b_summary.short_description = 'Post B'
 
     def __str__(self):
-        return '{} {}, {} {}'.format(
-            self.post_a.user,
-            self.post_a.created_datetime.strftime('%m-%d-%y %H:%M'),
-            self.post_b.user,
-            self.post_b.created_datetime.strftime('%m-%d-%y %H:%M'),
-        )
+        return '{} || {}'.format(self.post_a, self.post_b)
 
 
 class PostComparisonQueue(models.Model):
@@ -89,6 +87,9 @@ class PostComparisonQueue(models.Model):
         through_fields=('queue', 'comparison'),
     )
 
+    def __str__(self):
+        return self.name
+
 
 class PostComparisonQueueMember(models.Model):
 
@@ -97,3 +98,6 @@ class PostComparisonQueueMember(models.Model):
 
     class Meta:
         unique_together = ('queue', 'comparison')
+
+    def __str__(self):
+        return '{} || {}'.format(self.comparison.post_a, self.comparison.post_b)

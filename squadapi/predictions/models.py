@@ -19,11 +19,16 @@ class InstagramPrediction(models.Model):
 
     turker = models.ForeignKey(Turker)
     comparison = models.ForeignKey('instagram.PostComparisonQueueMember')
-    choice = models.ForeignKey('instagram.Post', to_field='post_id')
+    choice = models.ForeignKey('instagram.Post')
     decision_milliseconds = models.IntegerField()
     created_datetime = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ('turker', 'comparison')
+
     def clean(self):
-        comparison = self.comparison.comparison
-        if not self.choice in (comparison.post_a, comparison.post_b):
-            raise ValidationError('Choice must be a member of the comparison.')
+        if self.choice not in (
+            self.comparison.post_a,
+            self.comparison.post_b
+        ):
+            raise ValidationError('Choice must be within the comparison.')

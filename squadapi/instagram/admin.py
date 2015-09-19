@@ -113,7 +113,14 @@ class PostComparisonQueueMemberInline(admin.TabularInline):
 
 class PostComparisonQueueAdmin(admin.ModelAdmin):
 
-    list_display = ['name']
+    list_display = ['id', 'name']
     inlines = [PostComparisonQueueMemberInline]
 
 admin.site.register(PostComparisonQueue, PostComparisonQueueAdmin)
+
+
+class PostComparisonQueueMemberAdmin(admin.ModelAdmin):
+
+    list_display = ['id', 'queue_id', 'comparison_id']
+
+admin.site.register(PostComparisonQueueMember, PostComparisonQueueMemberAdmin)
