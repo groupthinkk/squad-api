@@ -37,8 +37,8 @@ class Normalization(models.Model):
 class PostComparison(models.Model):
 
     user = models.ForeignKey(User)
-    post_a = models.ForeignKey(Post, related_name='post_a')
-    post_b = models.ForeignKey(Post, related_name='post_b')
+    post_a = models.ForeignKey(Post, to_field='post_id', related_name='post_a')
+    post_b = models.ForeignKey(Post, to_field='post_id', related_name='post_b')
 
     class Meta:
         unique_together = ('post_a', 'post_b')
@@ -94,7 +94,6 @@ class PostComparisonQueueMember(models.Model):
 
     queue = models.ForeignKey(PostComparisonQueue)
     comparison = models.ForeignKey(PostComparison)
-    position = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ('queue', 'comparison')

@@ -109,7 +109,6 @@ class PostComparisonQueueMemberInline(admin.TabularInline):
 
     model = PostComparisonQueueMember
     extra = 1
-    ordering = ['position']
 
 
 class PostComparisonQueueAdmin(admin.ModelAdmin):

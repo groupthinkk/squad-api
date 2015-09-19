@@ -39,6 +39,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'instagram',
+    'predictions',
 )
 
 MIDDLEWARE_CLASSES = (
