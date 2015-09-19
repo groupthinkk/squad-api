@@ -70,3 +70,6 @@ reload-celery
 
 # static assets
 static/
+
+# OSX
+.DS_Store
