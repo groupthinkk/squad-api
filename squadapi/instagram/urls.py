@@ -7,8 +7,8 @@ from .views import UserList, PostList, PostRandom, PostComparisonList
 urlpatterns = [
     url(r'^instagram/users/$', UserList.as_view()),
     url(r'^instagram/posts/$', PostList.as_view()),
-    url(r'^instagram/posts/comparisons$', PostComparisonList.as_view()),
-    url(r'^instagram/posts/random$', PostRandom.as_view()),
+    url(r'^instagram/posts/comparisons/$', PostComparisonList.as_view()),
+    url(r'^instagram/posts/random/$', PostRandom.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
