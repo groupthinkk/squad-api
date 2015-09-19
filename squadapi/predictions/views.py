@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
 from rest_framework import status
 from rest_framework import generics
@@ -31,7 +32,10 @@ class TurkerList(generics.ListCreateAPIView):
     serializer_class = TurkerSerializer
     paginate_by = 25
     permission_classes = [APIKeyPermission]
-    lookup_field = 'turker_id'
+
+    def perform_create(self, serializer):
+        queue = Turker.instagram_queue.get_queryset().first()
+        serializer.save(instagram_queue=queue)
 
 
 class InstagramPredictionList(generics.ListCreateAPIView):
@@ -42,24 +46,30 @@ class InstagramPredictionList(generics.ListCreateAPIView):
     permission_classes = [APIKeyPermission]
 
     def post(self, request, format=None):
-        prediction = InstagramPrediction()
-        prediction.turker = get_object_or_404(
+        turker = get_object_or_404(
             Turker,
             turker_id=request.POST.get('turker_id'),
         )
+
+        prediction = InstagramPrediction()
+        prediction.turker = turker
         prediction.comparison = get_object_or_404(
             InstagramPrediction.comparison.get_queryset(),
-            pk=request.POST.get('comparison_id'),
+            queue=turker.instagram_queue,
+            comparison_id=int(request.POST.get('comparison_id')),
         )
-        prediction.choice_id = request.POST.get('choice_id')
+        prediction.choice_id = int(request.POST.get('choice_id'))
         prediction.decision_milliseconds = request.POST.get('decision_milliseconds')
+
         try:
-            prediction.save()
-        except IntegrityError:
+            prediction.full_clean()
+        except ValidationError as ve:
             return Response({
                 'status': 'error',
-                'message': 'Prediction already exists.',
+                'messages': ve.messages,
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        prediction.save()
 
         serializer = InstagramPredictionSerializer(prediction)
 

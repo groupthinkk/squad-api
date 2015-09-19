@@ -27,8 +27,8 @@ class InstagramPrediction(models.Model):
         unique_together = ('turker', 'comparison')
 
     def clean(self):
-        if self.choice not in (
-            self.comparison.post_a,
-            self.comparison.post_b
+        if self.choice_id not in (
+            self.comparison.comparison.post_a_id,
+            self.comparison.comparison.post_b_id,
         ):
             raise ValidationError('Choice must be within the comparison.')

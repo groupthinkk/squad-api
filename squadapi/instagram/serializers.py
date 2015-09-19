@@ -1,18 +1,17 @@
 from rest_framework import serializers
 
-from .models import User, Post
+from .models import User, Post, PostComparison
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = ('user_id', 'username', 'followers')
+        depth = 1
 
 
-class PostSerializer(serializers.HyperlinkedModelSerializer):
-
-    user = serializers.StringRelatedField()
+class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
@@ -24,3 +23,17 @@ class PostSerializer(serializers.HyperlinkedModelSerializer):
             'comments_count',
             'created_datetime',
         )
+        depth = 1
+
+
+class PostComparisonSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PostComparison
+        fields = (
+            'id',
+            'user',
+            'post_a',
+            'post_b',
+        )
+        depth = 1

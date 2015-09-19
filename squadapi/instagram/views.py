@@ -6,13 +6,16 @@ from datetime import datetime, timedelta
 
 from django.shortcuts import render
 
+from rest_framework import filters
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import BasePermission
 
-from .models import User, Post, Normalization
-from .serializers import UserSerializer, PostSerializer
+from .models import User, Post, PostComparison
+from .serializers import (
+    UserSerializer, PostSerializer, PostComparisonSerializer,
+)
 
 
 API_KEYS = (
@@ -24,6 +27,7 @@ class APIKeyPermission(BasePermission):
 
     def has_permission(self, request, view):
         return (
+            request.user.is_superuser or
             request.GET.get('api_key') in API_KEYS or
             request.POST.get('api_key') in API_KEYS
         )
@@ -35,6 +39,7 @@ class UserList(generics.ListAPIView):
     serializer_class = UserSerializer
     paginate_by = 25
     permission_classes = [APIKeyPermission]
+    filter_fields = ['user_id', 'username']
 
 
 class PostList(generics.ListAPIView):
@@ -50,6 +55,15 @@ class PostList(generics.ListAPIView):
                 user__username=self.request.query_params['username'],
             )
         return self.queryset
+
+
+class PostComparisonList(generics.ListCreateAPIView):
+
+    queryset = PostComparison.objects.all()
+    serializer_class = PostComparisonSerializer
+    paginate_by = 25
+    permission_classes = [APIKeyPermission]
+    filter_fields = ['id']
 
 
 def _format_post(post):
