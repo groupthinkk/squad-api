@@ -59,7 +59,7 @@ class PostList(generics.ListAPIView):
 
 class PostComparisonList(generics.ListCreateAPIView):
 
-    queryset = PostComparison.objects.all()
+    queryset = PostComparison.objects.select_related('user', 'post_a', 'post_b')
     serializer_class = PostComparisonSerializer
     paginate_by = 25
     permission_classes = [APIKeyPermission]
