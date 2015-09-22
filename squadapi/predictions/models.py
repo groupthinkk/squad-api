@@ -10,6 +10,8 @@ class Turker(models.Model):
         blank=True,
         null=True,
     )
+    updated_datetime = models.DateTimeField(auto_now=True)
+    created_datetime = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return '{}'.format(self.turker_id)
@@ -21,6 +23,8 @@ class InstagramPrediction(models.Model):
     comparison = models.ForeignKey('instagram.PostComparisonQueueMember')
     choice = models.ForeignKey('instagram.Post')
     decision_milliseconds = models.IntegerField()
+    correct = models.BooleanField()
+    ux_id = models.CharField(max_length=64, default='')
     created_datetime = models.DateTimeField(auto_now_add=True)
 
     class Meta:

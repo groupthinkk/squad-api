@@ -55,12 +55,21 @@ class InstagramPredictionList(generics.ListCreateAPIView):
         prediction = InstagramPrediction()
         prediction.turker = turker
         prediction.comparison = get_object_or_404(
-            InstagramPrediction.comparison.get_queryset(),
+            InstagramPrediction.comparison.get_queryset().select_related(),
             queue=turker.instagram_queue,
             comparison_id=int(request.POST.get('comparison_id')),
         )
         prediction.choice_id = int(request.POST.get('choice_id'))
+        prediction.ux_id = request.POST.get('ux_id') or ''
         prediction.decision_milliseconds = request.POST.get('decision_milliseconds')
+
+        post_a = prediction.comparison.comparison.post_a
+        post_b = prediction.comparison.comparison.post_b
+
+        if prediction.choice_id == post_a.id:
+            prediction.correct = post_a.likes_count > post_b.likes_count
+        else:
+            prediction.correct = post_b.likes_count > post_a.likes_count
 
         try:
             prediction.full_clean()
