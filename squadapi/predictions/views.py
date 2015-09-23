@@ -41,7 +41,7 @@ class TurkerList(generics.ListCreateAPIView):
 
 class InstagramPredictionList(generics.ListCreateAPIView):
 
-    queryset = InstagramPrediction.objects.all()
+    queryset = InstagramPrediction.objects.select_related()
     serializer_class = InstagramPredictionSerializer
     paginate_by = 25
     permission_classes = [APIKeyPermission]

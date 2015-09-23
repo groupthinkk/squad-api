@@ -19,7 +19,9 @@ class InstagramPredictionSerializer(serializers.ModelSerializer):
             'turker',
             'comparison',
             'choice',
+            'correct',
             'decision_milliseconds',
+            'ux_id',
             'created_datetime',
         )
         depth = 1
