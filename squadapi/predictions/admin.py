@@ -1,13 +1,12 @@
 from django.contrib import admin
 
-from .models import Turker, InstagramPrediction
+from .models import Turker, HIT, InstagramPrediction
 
 
 class TurkerAdmin(admin.ModelAdmin):
 
     list_display = [
         'turker_id',
-        'instagram_queue',
         'updated_datetime',
         'created_datetime',
     ]
@@ -15,10 +14,22 @@ class TurkerAdmin(admin.ModelAdmin):
 admin.site.register(Turker, TurkerAdmin)
 
 
+class HITAdmin(admin.ModelAdmin):
+
+    list_display = [
+        'hit_id',
+        'turker',
+        'instagram_queue',
+        'created_datetime',
+    ]
+
+admin.site.register(HIT, HITAdmin)
+
+
 class InstagramPredictionAdmin(admin.ModelAdmin):
 
     list_display = [
-        'turker',
+        'hit',
         'comparison',
         'choice',
         'decision_milliseconds',

@@ -5,11 +5,6 @@ from django.core.exceptions import ValidationError
 class Turker(models.Model):
 
     turker_id = models.CharField(max_length=128, unique=True)
-    instagram_queue = models.ForeignKey(
-        'instagram.PostComparisonQueue',
-        blank=True,
-        null=True,
-    )
     updated_datetime = models.DateTimeField(auto_now=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
 
@@ -17,10 +12,22 @@ class Turker(models.Model):
         return '{}'.format(self.turker_id)
 
 
+class HIT(models.Model):
+
+    hit_id = models.CharField(max_length=128, db_index=True)
+    turker = models.ForeignKey(Turker, to_field='turker_id')
+    status = models.CharField(max_length=64, default='', blank=True, db_index=True)
+    instagram_queue = models.ForeignKey('instagram.PostComparisonQueue')
+    created_datetime = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (('hit_id', 'turker'), ('turker', 'instagram_queue'))
+
+
 class InstagramPrediction(models.Model):
 
-    turker = models.ForeignKey(Turker)
-    comparison = models.ForeignKey('instagram.PostComparisonQueueMember')
+    hit = models.ForeignKey(HIT)
+    comparison = models.ForeignKey('instagram.PostComparison')
     choice = models.ForeignKey('instagram.Post')
     decision_milliseconds = models.IntegerField()
     correct = models.BooleanField()
@@ -28,11 +35,11 @@ class InstagramPrediction(models.Model):
     created_datetime = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('turker', 'comparison')
+        unique_together = ('hit', 'comparison')
 
     def clean(self):
         if self.choice_id not in (
-            self.comparison.comparison.post_a_id,
-            self.comparison.comparison.post_b_id,
+            self.comparison.post_a_id,
+            self.comparison.post_b_id,
         ):
             raise ValidationError('Choice must be within the comparison.')
