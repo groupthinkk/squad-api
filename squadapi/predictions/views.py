@@ -49,12 +49,12 @@ class HITList(generics.ListCreateAPIView):
 
     def post(self, request, format=None):
         hit = HIT()
-        hit.hit_id = request.POST.get('hit_id')
+        hit.hit_id = request.data.get('hit_id')
         hit.turker = get_object_or_404(
             Turker,
-            turker_id=request.POST.get('turker_id'),
+            turker_id=request.data.get('turker_id'),
         )
-        hit.status = request.POST.get('status') or ''
+        hit.status = request.data.get('status') or ''
 
         queue_ids = [h.instagram_queue_id for h in hit.turker.hit_set.all()]
         queues = HIT.instagram_queue.get_queryset().exclude(id__in=queue_ids)
@@ -63,7 +63,7 @@ class HITList(generics.ListCreateAPIView):
             queue = queues.all()[random.randint(0, queues.count() - 1)]
         except ValueError:
             message = 'No more queues available for turker_id: {}.'.format(
-                request.POST.get('turker_id'),
+                request.data.get('turker_id'),
             )
             return Response({
                 'status': 'error',
@@ -99,15 +99,15 @@ class InstagramPredictionList(generics.ListCreateAPIView):
         prediction = InstagramPrediction()
         prediction.hit = get_object_or_404(
             HIT,
-            pk=request.POST.get('hit_id'),
+            pk=request.data.get('hit_id'),
         )
         prediction.comparison = get_object_or_404(
             InstagramPrediction.comparison.get_queryset(),
-            pk=int(request.POST.get('comparison_id')),
+            pk=int(request.data.get('comparison_id')),
         )
-        prediction.choice_id = int(request.POST.get('choice_id'))
-        prediction.ux_id = request.POST.get('ux_id') or ''
-        prediction.decision_milliseconds = request.POST.get('decision_milliseconds')
+        prediction.choice_id = int(request.data.get('choice_id'))
+        prediction.ux_id = request.data.get('ux_id') or ''
+        prediction.decision_milliseconds = request.data.get('decision_milliseconds')
 
         post_a = prediction.comparison.post_a
         post_b = prediction.comparison.post_b

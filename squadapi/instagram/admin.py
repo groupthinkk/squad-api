@@ -108,6 +108,7 @@ admin.site.register(PostComparison, PostComparisonAdmin)
 class PostComparisonQueueMemberInline(admin.TabularInline):
 
     model = PostComparisonQueueMember
+    readonly_fields = ['queue', 'comparison']
     extra = 1
 
 
@@ -115,6 +116,7 @@ class PostComparisonQueueAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'name']
     inlines = [PostComparisonQueueMemberInline]
+    exclude = ['comparisons']
 
 admin.site.register(PostComparisonQueue, PostComparisonQueueAdmin)
 
