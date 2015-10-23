@@ -4,8 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 
-from rest_framework import status
-from rest_framework import generics
+from rest_framework import status, generics
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import User, Post, PostComparison
+from .models import User, Post, PostComparison, PostComparisonQueue
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,3 +37,15 @@ class PostComparisonSerializer(serializers.ModelSerializer):
             'post_b',
         )
         depth = 1
+
+
+class PostComparisonQueueSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PostComparisonQueue
+        fields = (
+            'id',
+            'name',
+            'comparisons',
+        )
+        depth = 0

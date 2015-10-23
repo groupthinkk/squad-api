@@ -4,17 +4,17 @@ import random
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
-from rest_framework import filters
-from rest_framework import generics
+from rest_framework import status, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import BasePermission
 
-from .models import User, Post, PostComparison
+from .models import User, Post, PostComparison, PostComparisonQueue
 from .serializers import (
     UserSerializer, PostSerializer, PostComparisonSerializer,
+    PostComparisonQueueSerializer,
 )
 
 
@@ -31,6 +31,13 @@ class APIKeyPermission(BasePermission):
             request.GET.get('api_key') in API_KEYS or
             request.POST.get('api_key') in API_KEYS
         )
+
+
+def bad_request(message):
+    return Response({
+        'status': 'error',
+        'message': message,
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserList(generics.ListAPIView):
@@ -64,6 +71,37 @@ class PostComparisonList(generics.ListCreateAPIView):
     paginate_by = 25
     permission_classes = [APIKeyPermission]
     filter_fields = ['id']
+
+
+class PostComparisonQueueList(generics.ListCreateAPIView):
+
+    queryset = PostComparisonQueue.objects.all()
+    serializer_class = PostComparisonQueueSerializer
+    paginate_by = 25
+    permission_classes = [APIKeyPermission]
+    filter_fields = ['id']
+
+    def post(self, request, format=None):
+        try:
+            user = User.objects.get(user_id=request.data.get('user_id'))
+        except User.DoesNotExist:
+            return bad_request(
+                'Required parameter missing or does not exist: user_id'
+            )
+
+        post_id = request.data.get('post_id') or ''
+
+        if not post_id:
+            return bad_request('Required parameter missing: post_id')
+
+        queue = PostComparisonQueue(
+            name='auto-{}'.format(post_id),
+        )
+        queue.save()
+
+        serializer = PostComparisonQueueSerializer(queue)
+
+        return Response(serializer.data)
 
 
 def _format_post(post):
