@@ -16,6 +16,7 @@ from .serializers import (
     UserSerializer, PostSerializer, PostComparisonSerializer,
     PostComparisonQueueSerializer,
 )
+from .tasks import update_comparison_queue
 
 
 API_KEYS = (
@@ -98,6 +99,8 @@ class PostComparisonQueueList(generics.ListCreateAPIView):
             name='auto-{}'.format(post_id),
         )
         queue.save()
+
+        update_comparison_queue.delay(user, queue, post_id)
 
         serializer = PostComparisonQueueSerializer(queue)
 

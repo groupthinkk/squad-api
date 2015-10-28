@@ -35,7 +35,8 @@ def get_user(user_id):
     return r.json()['data']
 
 
-def get_posts(user_id):
+def get_posts(user_id, count=1000):
+    i = 0
     max_id = None
 
     while True:
@@ -51,8 +52,12 @@ def get_posts(user_id):
         data = r.json()['data']
 
         if not data:
-            break
+            return
 
         for post in data:
+            i += 1
             max_id = post['id']
             yield post
+
+        if i >= count:
+            return

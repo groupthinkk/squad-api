@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from .models import (
     User, Post, PostComparison, PostComparisonQueue, PostComparisonQueueMember,
 )
-from .tasks import update_user, update_all_posts, update_normalization_data
+from .tasks import update_user, update_user_posts, update_normalization_data
 from .forms import UserAdminForm
 
 
@@ -33,7 +33,7 @@ class UserAdmin(admin.ModelAdmin):
     def update_user_posts(self, request, queryset):
         tasks = []
         for user in queryset:
-            tasks.append(update_all_posts.delay(user))
+            tasks.append(update_user_posts.delay(user))
         ntasks = len([t for t in tasks if t])
         self.message_user(request, _task_message(ntasks))
 
