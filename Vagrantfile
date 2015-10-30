@@ -6,12 +6,12 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 $setup = <<SCRIPT
-sudo apt-get update
-sudo apt-get install -y python3-pip
+apt-get update
+apt-get install -y python3-pip rabbitmq-server
+apt-get install -y libpq-dev postgresql-client
+
 sudo mkdir /opt/virtualenvs
 sudo chown vagrant:vagrant /opt/virtualenvs/
-
-sudo apt-get install -y rabbitmq-server
 
 pip3 install virtualenvwrapper
 export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
