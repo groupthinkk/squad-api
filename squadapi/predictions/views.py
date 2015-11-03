@@ -8,9 +8,10 @@ from rest_framework import status, generics
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
-from .models import Turker, HIT, InstagramPrediction
+from .models import Turker, HIT, InstagramPrediction, TurkerPerformance
 from .serializers import (
     TurkerSerializer, HITSerializer, InstagramPredictionSerializer,
+    TurkerPerformanceSerializer,
 )
 
 
@@ -36,6 +37,14 @@ class TurkerList(generics.ListCreateAPIView):
     paginate_by = 25
     permission_classes = [APIKeyPermission]
     filter_fields = ['turker_id']
+
+
+class TurkerPerformanceList(generics.ListAPIView):
+
+    queryset = TurkerPerformance.objects.all().order_by('-correctness')
+    serializer_class = TurkerPerformanceSerializer
+    paginate_by = 25
+    permission_classes = [APIKeyPermission]
 
 
 class HITList(generics.ListCreateAPIView):

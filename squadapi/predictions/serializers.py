@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Turker, HIT, InstagramPrediction
+from .models import Turker, HIT, InstagramPrediction, TurkerPerformance
 
 
 class TurkerSerializer(serializers.ModelSerializer):
@@ -8,6 +8,14 @@ class TurkerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Turker
         fields = ('id', 'turker_id')
+        depth = 1
+
+
+class TurkerPerformanceSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TurkerPerformance
+        fields = ('turker', 'correctness', 'updated_datetime')
         depth = 1
 
 
