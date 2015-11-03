@@ -67,16 +67,19 @@ class HITList(generics.ListCreateAPIView):
         queue_ids = [h.instagram_queue_id for h in hit.turker.hit_set.all()]
         queues = HIT.instagram_queue.get_queryset().exclude(id__in=queue_ids)
 
-        try:
-            queue = queues.all()[random.randint(0, queues.count() - 1)]
-        except ValueError:
-            message = 'No more queues available for turker_id: {}.'.format(
-                request.data.get('turker_id'),
-            )
-            return Response({
-                'status': 'error',
-                'messages': message,
-            }, status=status.HTTP_400_BAD_REQUEST)
+        if 'queue_id' in request.data:
+            queue = queues.get(id=int(request.data['queue_id']))
+        else:
+            try:
+                queue = queues.all()[random.randint(0, queues.count() - 1)]
+            except ValueError:
+                message = 'No more queues available for turker_id: {}.'.format(
+                    request.data.get('turker_id'),
+                )
+                return Response({
+                    'status': 'error',
+                    'messages': message,
+                }, status=status.HTTP_400_BAD_REQUEST)
 
         hit.instagram_queue = queue
 
