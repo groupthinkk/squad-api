@@ -12,6 +12,13 @@ class Turker(models.Model):
         return '{}'.format(self.turker_id)
 
 
+class TurkerPerformance(models.Model):
+
+    turker = models.OneToOneField(Turker)
+    correctness = models.FloatField(db_index=True)
+    updated_datetime = models.DateTimeField(auto_now=True)
+
+
 class HIT(models.Model):
 
     hit_id = models.CharField(max_length=128, db_index=True)
