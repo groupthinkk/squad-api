@@ -22,8 +22,10 @@ logger = get_task_logger(__name__)
 def update_user(user):
     user_data = get_user(user.user_id)
 
+    user.name = user_data['full_name']
     user.username = user_data['username']
     user.followers = user_data['counts']['followed_by']
+    user.image_url = user_data['profile_picture']
     user.save()
 
 

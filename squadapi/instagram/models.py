@@ -4,9 +4,16 @@ from django.core.exceptions import ValidationError
 
 class User(models.Model):
 
+    name = models.CharField(max_length=64, default='', blank=True)
     user_id = models.CharField(max_length=64, default='', blank=True, unique=True)
     username = models.CharField(max_length=64, unique=True)
     followers = models.IntegerField(blank=True, null=True)
+    image_url = models.URLField()
+
+    def image_tag(self):
+        return '<img src="{0}" width="50"/>'.format(self.image_url)
+    image_tag.allow_tags = True
+    image_tag.short_description = 'Image'
 
     def __str__(self):
         return self.username

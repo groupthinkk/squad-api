@@ -21,7 +21,7 @@ class UserAdmin(admin.ModelAdmin):
         'update_user_posts',
         'update_normalization_data',
     ]
-    list_display = ['id', 'username', 'user_id', 'followers']
+    list_display = ['image_tag', 'name', 'username', 'user_id', 'followers']
 
     def update_user_data(self, request, queryset):
         tasks = []

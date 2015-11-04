@@ -24,14 +24,18 @@ class UserAdminForm(forms.ModelForm):
 
         user = get_user(user['id'])
 
+        self.cleaned_data['name'] = user['full_name']
         self.cleaned_data['user_id'] = user['id']
         self.cleaned_data['username'] = user['username']
         self.cleaned_data['followers'] = user['counts']['followed_by']
+        self.cleaned_data['image_url'] = user['profile_picture']
 
     def save(self, **kwargs):
         user = super(UserAdminForm, self).save(commit=False)
+        user.name = self.cleaned_data['name']
         user.user_id = self.cleaned_data['user_id']
         user.followers = self.cleaned_data['followers']
+        user.image_url = self.cleaned_data['image_url']
 
         if kwargs.get('commit'):
             user.save()
