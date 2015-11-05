@@ -1,5 +1,6 @@
 import json
 
+from random import sample
 from datetime import datetime
 from operator import attrgetter
 from itertools import product, combinations, chain
@@ -16,6 +17,25 @@ from .collect import get_user, get_posts
 
 
 logger = get_task_logger(__name__)
+
+
+HOT_15 = [
+    'patagonia',
+    'jcrew',
+    'gap',
+    'hm',
+    'forever21',
+    'zara',
+    'nordstrom',
+    'underarmour',
+    'americaneagle',
+    'topshop',
+    'tommyhilfiger',
+    'levis',
+    'oldnavy',
+    'abercrombie',
+    'ralphlauren',
+]
 
 
 @shared_task
@@ -81,9 +101,13 @@ def select_comparison_posts(user):
     v2 = sorted_posts[max(0, i2 - 2):i2 + 1]
     v3 = sorted_posts[max(0, i3 - 2):i3 + 1]
 
-    mean_squared_error = lambda x: sum([i.likes_count for i in x]) / len(x)
+    def minimize_time_of_day_error(posts):
+        return sum([
+            min(post.created_datetime.hour, 24 - post.created_datetime.hour)
+            for post in posts
+        ]) / len(posts)
 
-    return sorted(product(v1, v2, v3), key=mean_squared_error)[0]
+    return sorted(product(v1, v2, v3), key=minimize_time_of_day_error)[0]
 
 
 @shared_task
@@ -95,16 +119,20 @@ def update_comparison_queue(user, queue, post_id):
     except Post.DoesNotExist:
         return
 
-    comparison_posts = select_comparison_posts(user)
+    users = User.objects.filter(username__in=sample(HOT_15, 5))
 
-    for post_a, post_b in combinations(chain(comparison_posts, [post]), 2):
-        comparison, _ = PostComparison.objects.get_or_create(
-            post_a=post_a,
-            post_b=post_b,
-            defaults={'user': user},
-        )
-        member = PostComparisonQueueMember(
-            queue=queue,
-            comparison=comparison,
-        )
-        member.save()
+    for u in chain([user], users):
+        update_user_posts(u, count=50)
+        comparison_posts = select_comparison_posts(u)
+
+        for post_a, post_b in combinations(chain(comparison_posts, [post]), 2):
+            comparison, _ = PostComparison.objects.get_or_create(
+                post_a=post_a,
+                post_b=post_b,
+                defaults={'user': u},
+            )
+            member = PostComparisonQueueMember(
+                queue=queue,
+                comparison=comparison,
+            )
+            member.save()
