@@ -88,7 +88,7 @@ def update_normalization_data(user):
     Normalization.objects.update_or_create(user=user, defaults=updated_values)
 
 
-def select_comparison_posts(user):
+def get_post_comparisons(user, post):
     posts = Post.objects.filter(user=user).order_by('-created_datetime')[10:50]
 
     sorted_posts = sorted(posts, key=attrgetter('likes_count'))
@@ -103,29 +103,33 @@ def select_comparison_posts(user):
 
     def minimize_time_of_day_error(posts):
         return sum([
-            min(post.created_datetime.hour, 24 - post.created_datetime.hour)
-            for post in posts
+            min(p.created_datetime.hour, 24 - p.created_datetime.hour)
+            for p in posts
         ]) / len(posts)
 
-    return sorted(product(v1, v2, v3), key=minimize_time_of_day_error)[0]
+    posts = sorted(product(v1, v2, v3), key=minimize_time_of_day_error)[0]
+
+    return combinations(chain(posts, [post]), 2)
 
 
 @shared_task
 def update_comparison_queue(user, queue, post_id):
-    update_user_posts(user, count=50)
-
-    try:
-        post = Post.objects.get(post_id=post_id)
-    except Post.DoesNotExist:
-        return
-
     users = User.objects.filter(username__in=sample(HOT_15, 5))
 
     for u in chain([user], users):
         update_user_posts(u, count=50)
-        comparison_posts = select_comparison_posts(u)
 
-        for post_a, post_b in combinations(chain(comparison_posts, [post]), 2):
+        if u == user:
+            try:
+                post = Post.objects.get(post_id=post_id)
+            except Post.DoesNotExist:
+                return
+        else:
+            post = Post.objects.filter(user=u).order_by(
+                '-created_datetime',
+            ).first()
+
+        for post_a, post_b in get_post_comparisons(u, post):
             comparison, _ = PostComparison.objects.get_or_create(
                 post_a=post_a,
                 post_b=post_b,
