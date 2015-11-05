@@ -32,11 +32,10 @@ class PostComparisonSerializer(serializers.ModelSerializer):
         model = PostComparison
         fields = (
             'id',
-            'user',
             'post_a',
             'post_b',
         )
-        depth = 1
+        depth = 2
 
 
 class PostComparisonQueueSerializer(serializers.ModelSerializer):
