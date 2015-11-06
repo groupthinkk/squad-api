@@ -20,6 +20,13 @@ API_KEYS = (
 )
 
 
+def bad_request(message):
+    return Response({
+        'status': 'error',
+        'messages': message,
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+
 class APIKeyPermission(BasePermission):
 
     def has_permission(self, request, view):
@@ -64,32 +71,35 @@ class HITList(generics.ListCreateAPIView):
         )
         hit.status = request.data.get('status') or ''
 
-        queue_ids = [h.instagram_queue_id for h in hit.turker.hit_set.all()]
-        queues = HIT.instagram_queue.get_queryset().exclude(id__in=queue_ids)
+        queue_queryset = HIT.instagram_queue.get_queryset()
 
         if 'queue_id' in request.data:
-            queue = queues.get(id=int(request.data['queue_id']))
+            queue_id = request.data['queue_id']
+            try:
+                queue = queue_queryset.get(id=int(queue_id))
+            except ValueError:
+                return bad_request('Invalid queue_id.')
+            except queue_queryset.model.DoesNotExist:
+                return bad_request(
+                    'Queue with queue_id={} does not exist.'.format(queue_id)
+                )
         else:
+            queue_ids = [h.instagram_queue_id for h in hit.turker.hit_set.all()]
+            queues = queue_queryset.exclude(id__in=queue_ids)
             try:
                 queue = queues.all()[random.randint(0, queues.count() - 1)]
             except ValueError:
                 message = 'No more queues available for turker_id: {}.'.format(
                     request.data.get('turker_id'),
                 )
-                return Response({
-                    'status': 'error',
-                    'messages': message,
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return bad_request(message)
 
         hit.instagram_queue = queue
 
         try:
             hit.full_clean()
         except ValidationError as ve:
-            return Response({
-                'status': 'error',
-                'messages': ve.messages,
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request(ve.messages)
 
         hit.save()
 
@@ -131,10 +141,7 @@ class InstagramPredictionList(generics.ListCreateAPIView):
         try:
             prediction.full_clean()
         except ValidationError as ve:
-            return Response({
-                'status': 'error',
-                'messages': ve.messages,
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return bad_request(ve.messages)
 
         prediction.save()
 
