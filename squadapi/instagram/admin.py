@@ -1,11 +1,17 @@
+from django.conf.urls import url
 from django.contrib import admin, messages
-from django.db import IntegrityError
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.db.models import Count
+from django.template.response import TemplateResponse
 
 from .models import (
-    User, Post, PostComparison, PostComparisonQueue, PostComparisonQueueMember,
+    User, Post, PostComparison, PostComparisonQueue, PostComparisonQueueMember, Follow,
 )
-from .tasks import update_user, update_user_posts, update_normalization_data
+from .tasks import (
+    update_user, update_user_posts, update_normalization_data, add_user,
+    update_user_follows,
+)
 from .forms import UserAdminForm
 
 
@@ -19,9 +25,51 @@ class UserAdmin(admin.ModelAdmin):
     actions = [
         'update_user_data',
         'update_user_posts',
-        'update_normalization_data',
+        'update_user_follows',
     ]
-    list_display = ['image_tag', 'name', 'username', 'user_id', 'followers']
+    list_display = [
+        'image_tag',
+        'name',
+        'username',
+        'user_id',
+        'followers',
+        'friends_and_family',
+        'ff_follows',
+    ]
+    list_filter = ['friends_and_family']
+    ordering = ['-ff_follows']
+
+    def get_queryset(self, request):
+        return User.objects.annotate(ff_follows=Count('follows_user'))
+
+    def ff_follows(self, obj):
+        return obj.ff_follows
+    ff_follows.short_description = 'Friends & Family follows'
+    ff_follows.admin_order_field = 'ff_follows'
+
+    def get_urls(self):
+        urls = super(UserAdmin, self).get_urls()
+        my_urls = [
+            url(r'^bulk_add/$', self.admin_site.admin_view(self.bulk_add)),
+        ]
+        return my_urls + urls
+
+    def bulk_add(self, request):
+        context = dict(
+            self.admin_site.each_context(request),
+        )
+
+        if request.method == 'POST':
+            usernames = request.POST['usernames'].strip().replace(',', ' ').split()
+            friends_and_family = request.POST.get('friends_and_family', False)
+
+            for username in usernames:
+                add_user.delay({
+                    'username': username,
+                    'friends_and_family': friends_and_family,
+                })
+
+        return TemplateResponse(request, 'admin/bulk_add.html', context)
 
     def update_user_data(self, request, queryset):
         tasks = []
@@ -37,10 +85,10 @@ class UserAdmin(admin.ModelAdmin):
         ntasks = len([t for t in tasks if t])
         self.message_user(request, _task_message(ntasks))
 
-    def update_normalization_data(self, request, queryset):
+    def update_user_follows(self, request, queryset):
         tasks = []
         for user in queryset:
-            tasks.append(update_normalization_data.delay(user))
+            tasks.append(update_user_follows.delay(user))
         ntasks = len([t for t in tasks if t])
         self.message_user(request, _task_message(ntasks))
 
@@ -126,3 +174,10 @@ class PostComparisonQueueMemberAdmin(admin.ModelAdmin):
     list_display = ['id', 'queue_id', 'comparison_id']
 
 admin.site.register(PostComparisonQueueMember, PostComparisonQueueMemberAdmin)
+
+
+class FollowAdmin(admin.ModelAdmin):
+
+    list_display = ['id', 'user', 'follows_user']
+
+admin.site.register(Follow, FollowAdmin)

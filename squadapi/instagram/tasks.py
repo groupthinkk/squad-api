@@ -11,9 +11,11 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from .models import (
-    User, Post, Normalization, PostComparison, PostComparisonQueueMember,
+    User, Post, Normalization, PostComparison, PostComparisonQueueMember, Follow,
 )
-from .collect import get_user, get_posts
+from .collect import (
+    get_user, get_posts, get_follows, InstagramAPIError, InstagramAPIRateLimit,
+)
 
 
 logger = get_task_logger(__name__)
@@ -36,6 +38,16 @@ HOT_15 = [
     'abercrombie',
     'ralphlauren',
 ]
+
+
+@shared_task
+def add_user(data):
+    from .forms import UserAdminForm
+
+    form = UserAdminForm(data)
+
+    if form.is_valid():
+        form.save(commit=True)
 
 
 @shared_task
@@ -140,3 +152,33 @@ def update_comparison_queue(user, queue, post_id):
                 comparison=comparison,
             )
             member.save()
+
+
+@shared_task
+def update_user_follows(user, depth=2):
+    if depth < 1:
+        return
+
+    for user_data, exception in get_follows(user.user_id):
+        if exception:
+            try:
+                raise exception
+            except InstagramAPIRateLimit:
+                update_user_follows.apply_async((user, depth), countdown=60 * 5)
+                raise exception
+
+        try:
+            follows_user = User.objects.get(user_id=user_data['id'])
+        except User.DoesNotExist:
+            follows_user = User(
+                name=user_data['full_name'],
+                user_id=user_data['id'],
+                username=user_data['username'],
+                image_url=user_data['profile_picture'],
+            )
+            follows_user.save()
+
+        if not Follow.objects.filter(user=user).count():
+            update_user_follows.delay(follows_user, depth=depth - 1)
+
+        Follow.objects.get_or_create(user=user, follows_user=follows_user)

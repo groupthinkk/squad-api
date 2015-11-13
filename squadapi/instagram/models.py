@@ -9,6 +9,7 @@ class User(models.Model):
     username = models.CharField(max_length=64, unique=True)
     followers = models.IntegerField(blank=True, null=True)
     image_url = models.URLField()
+    friends_and_family = models.BooleanField(default=False)
 
     def image_tag(self):
         return '<img src="{0}" width="50"/>'.format(self.image_url)
@@ -106,5 +107,11 @@ class PostComparisonQueueMember(models.Model):
     class Meta:
         unique_together = ('queue', 'comparison')
 
-    def __str__(self):
-        return '{} || {}'.format(self.comparison.post_a, self.comparison.post_b)
+
+class Follow(models.Model):
+
+    user = models.ForeignKey(User, related_name='user')
+    follows_user = models.ForeignKey(User, related_name='follows_user')
+
+    class Meta:
+        unique_together = ('user', 'follows_user')

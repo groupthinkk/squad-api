@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+<style>
+    .bulk-add-form {
+        width: 600px;
+        display: block;
+    }
+    textarea {
+        width: 100%;
+        height: 350px;
+    }
+    #submit {
+        float: right;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-add-form">
+    <form method="POST">
+        {% csrf_token %}
+        <p>Paste a list of line- or comma-delimited Instagram usernames.</p>
+        <textarea name="usernames"></textarea>
+        <input type="checkbox" id="ff-checkbox" name="friends_and_family" value="ff">
+        <label for="ff-checkbox">Friends and family</label>
+        <input type="submit" id="submit" value="Submit">
+    </form>
+</div>
+{% endblock %}
