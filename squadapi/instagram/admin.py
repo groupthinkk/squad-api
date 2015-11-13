@@ -37,7 +37,6 @@ class UserAdmin(admin.ModelAdmin):
         'ff_follows',
     ]
     list_filter = ['friends_and_family']
-    ordering = ['-ff_follows']
 
     def get_queryset(self, request):
         return User.objects.annotate(ff_follows=Count('follows_user'))
@@ -88,7 +87,10 @@ class UserAdmin(admin.ModelAdmin):
     def update_user_follows(self, request, queryset):
         tasks = []
         for user in queryset:
-            tasks.append(update_user_follows.delay(user))
+            tasks.append(update_user_follows.apply_async(
+                args=[user],
+                queue='crawler',
+            ))
         ntasks = len([t for t in tasks if t])
         self.message_user(request, _task_message(ntasks))
 

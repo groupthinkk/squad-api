@@ -164,7 +164,11 @@ def update_user_follows(user, depth=2):
             try:
                 raise exception
             except InstagramAPIRateLimit:
-                update_user_follows.apply_async((user, depth), countdown=60 * 5)
+                update_user_follows.apply_async(
+                    args=(user, depth),
+                    queue='crawler',
+                    countdown=60 * 5,
+                )
                 raise exception
 
         try:
@@ -179,6 +183,9 @@ def update_user_follows(user, depth=2):
             follows_user.save()
 
         if not Follow.objects.filter(user=user).count():
-            update_user_follows.delay(follows_user, depth=depth - 1)
+            update_user_follows.apply_async(
+                args=(follows_user, depth - 1),
+                queue='crawler',
+            )
 
         Follow.objects.get_or_create(user=user, follows_user=follows_user)
