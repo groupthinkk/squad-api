@@ -1,9 +1,9 @@
 import json
 
-from random import sample
+from random import sample, randint
 from datetime import datetime
 from operator import attrgetter
-from itertools import product, combinations, chain
+from itertools import product, chain
 from statistics import mean, stdev
 from collections import defaultdict
 
@@ -101,7 +101,10 @@ def update_normalization_data(user):
 
 
 def get_post_comparisons(user, post):
-    posts = Post.objects.filter(user=user).order_by('-created_datetime')[10:50]
+    posts = Post.objects.filter(
+        user=user,
+        created_datetime__lt=post.created_datetime,
+    ).order_by('-created_datetime')[:30]
 
     sorted_posts = sorted(posts, key=attrgetter('likes_count'))
 
@@ -119,39 +122,46 @@ def get_post_comparisons(user, post):
             for p in posts
         ]) / len(posts)
 
-    posts = sorted(product(v1, v2, v3), key=minimize_time_of_day_error)[0]
-
-    return combinations(chain(posts, [post]), 2)
+    return sorted(product(v1, v2, v3), key=minimize_time_of_day_error)[0]
 
 
 @shared_task
 def update_comparison_queue(user, queue, post_id):
-    users = User.objects.filter(username__in=sample(HOT_15, 5))
+    users = User.objects.filter(username__in=sample(HOT_15, 4))
 
     for u in chain([user], users):
-        update_user_posts(u, count=50)
+        update_user_posts(u, count=150)
+
+        n = randint(1, 10)
+        sample_size = 3
 
         if u == user:
             try:
                 post = Post.objects.get(post_id=post_id)
             except Post.DoesNotExist:
                 return
-        else:
-            post = Post.objects.filter(user=u).order_by(
+            posts = Post.objects.filter(user=u).order_by(
                 '-created_datetime',
-            ).first()
+            )[n:n + 20:10]
+            posts = chain([post], posts)
+        else:
+            posts = Post.objects.filter(user=u).order_by(
+                '-created_datetime',
+            )[n:n + 30:10]
 
-        for post_a, post_b in get_post_comparisons(u, post):
-            comparison, _ = PostComparison.objects.get_or_create(
-                post_a=post_a,
-                post_b=post_b,
-                defaults={'user': u},
-            )
-            member = PostComparisonQueueMember(
-                queue=queue,
-                comparison=comparison,
-            )
-            member.save()
+        for target_post in posts:
+            for comparison_post in get_post_comparisons(u, target_post):
+                post_a, post_b = sample([target_post, comparison_post], 2)
+                comparison, _ = PostComparison.objects.get_or_create(
+                    post_a=post_a,
+                    post_b=post_b,
+                    defaults={'user': u},
+                )
+                member = PostComparisonQueueMember(
+                    queue=queue,
+                    comparison=comparison,
+                )
+                member.save()
 
 
 @shared_task
