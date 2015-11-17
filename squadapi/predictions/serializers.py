@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from .models import Turker, HIT, InstagramPrediction, TurkerPerformance
+from .models import (
+    Turker, HIT, InstagramPrediction, TurkerPerformance, InstagramPost,
+)
 
 
 class TurkerSerializer(serializers.ModelSerializer):
@@ -49,5 +51,21 @@ class InstagramPredictionSerializer(serializers.ModelSerializer):
             'ux_id',
             'created_datetime',
             'contains_target',
+        )
+        depth = 1
+
+
+class InstagramPostSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InstagramPost
+        fields = (
+            'id',
+            'post',
+            'hit_id',
+            'lower_bound',
+            'upper_bound',
+            'updated_datetime',
+            'created_datetime',
         )
         depth = 1

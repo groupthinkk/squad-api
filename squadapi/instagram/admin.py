@@ -6,11 +6,11 @@ from django.db.models import Count
 from django.template.response import TemplateResponse
 
 from .models import (
-    User, Post, PostComparison, PostComparisonQueue, PostComparisonQueueMember, Follow,
+    User, Post, PostComparison, PostComparisonQueue, PostComparisonQueueMember,
+    Follow,
 )
 from .tasks import (
-    update_user, update_user_posts, update_normalization_data, add_user,
-    update_user_follows,
+    update_user, update_user_posts, add_user, update_user_follows,
 )
 from .forms import UserAdminForm
 

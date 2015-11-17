@@ -60,3 +60,13 @@ class InstagramPrediction(models.Model):
             self.comparison.post_a.post_id in queue_name
             or self.comparison.post_b.post_id in queue_name
         )
+
+
+class InstagramPost(models.Model):
+
+    post = models.ForeignKey('instagram.Post')
+    hit_id = models.CharField(max_length=128)
+    lower_bound = models.IntegerField()
+    upper_bound = models.IntegerField()
+    updated_datetime = models.DateTimeField(auto_now=True)
+    created_datetime = models.DateTimeField(auto_now_add=True)

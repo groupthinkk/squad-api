@@ -59,6 +59,12 @@ class PostComparison(models.Model):
             raise ValidationError('Post comparisons must have the same user.')
         self.user = self.post_a.user
 
+    def contains_post(self, post):
+        return self.post_a == post or self.post_b == post
+
+    def opposite_post(self, post):
+        return self.post_a if post != self.post_a else self.post_b
+
     @property
     def summary_template(self):
         return (

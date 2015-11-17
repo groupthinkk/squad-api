@@ -1,6 +1,8 @@
 from django.contrib import admin
 
-from .models import Turker, HIT, InstagramPrediction, TurkerPerformance
+from .models import (
+    Turker, HIT, InstagramPrediction, TurkerPerformance, InstagramPost,
+)
 from .tasks import update_turker_performance
 
 
@@ -65,3 +67,16 @@ class InstagramPredictionAdmin(admin.ModelAdmin):
     ]
 
 admin.site.register(InstagramPrediction, InstagramPredictionAdmin)
+
+
+class InstagramPostAdmin(admin.ModelAdmin):
+
+    list_display = [
+        'post',
+        'hit_id',
+        'lower_bound',
+        'upper_bound',
+        'created_datetime',
+    ]
+
+admin.site.register(InstagramPost, InstagramPostAdmin)

@@ -1,18 +1,20 @@
 import random
 
 from django.shortcuts import get_object_or_404
-from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 
 from rest_framework import status, generics
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 
-from .models import Turker, HIT, InstagramPrediction, TurkerPerformance
+from .models import (
+    Turker, HIT, InstagramPrediction, TurkerPerformance, InstagramPost,
+)
 from .serializers import (
     TurkerSerializer, HITSerializer, InstagramPredictionSerializer,
-    TurkerPerformanceSerializer,
+    TurkerPerformanceSerializer, InstagramPostSerializer,
 )
+from .tasks import update_turker_performance, update_hit_prediction
 
 
 API_KEYS = (
@@ -145,6 +147,21 @@ class InstagramPredictionList(generics.ListCreateAPIView):
 
         prediction.save()
 
+        prediction_count = prediction.hit.instagramprediction_set.count()
+        comparison_count = prediction.hit.instagram_queue.comparisons.count()
+
+        if prediction_count == comparison_count:
+            update_hit_prediction.delay(prediction.hit.hit_id)
+            update_turker_performance.delay(prediction.hit.turker)
+
         serializer = InstagramPredictionSerializer(prediction)
 
         return Response(serializer.data)
+
+
+class InstagramPostList(generics.ListAPIView):
+
+    queryset = InstagramPost.objects.all().order_by('-id')
+    serializer_class = InstagramPostSerializer
+    paginate_by = 25
+    permission_classes = [APIKeyPermission]
