@@ -15,7 +15,13 @@ def update_turker_performance(turker):
     predictions = InstagramPrediction.objects.filter(
         hit__in=turker.hit_set.all()
     ).order_by('-created_datetime')[:300]
-    correctness = mean(predictions.values_list('correct', flat=True))
+
+    correctness = mean(
+        map(
+            lambda x: x.correct,
+            filter(lambda x: not x.contains_target, predictions),
+        )
+    )
 
     performance, created = TurkerPerformance.objects.get_or_create(
         turker=turker,
