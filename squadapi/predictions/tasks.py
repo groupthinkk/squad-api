@@ -1,5 +1,4 @@
 from functools import partial
-from statistics import mean
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -16,12 +15,12 @@ def update_turker_performance(turker):
         hit__in=turker.hit_set.all()
     ).order_by('-created_datetime')[:300]
 
-    correctness = mean(
-        map(
-            lambda x: x.correct,
-            filter(lambda x: not x.contains_target, predictions),
-        )
-    )
+    correct = list(map(
+        lambda x: x.correct,
+        filter(lambda x: not x.contains_target, predictions),
+    ))
+
+    correctness = correct.count(True) / len(correct)
 
     performance, created = TurkerPerformance.objects.get_or_create(
         turker=turker,
