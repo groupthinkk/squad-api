@@ -50,3 +50,13 @@ class InstagramPrediction(models.Model):
             self.comparison.post_b_id,
         ):
             raise ValidationError('Choice must be within the comparison.')
+
+    @property
+    def contains_target(self):
+        queue_name = self.hit.instagram_queue.name
+        if 'auto' not in queue_name:
+            return False
+        return (
+            self.comparison.post_a.post_id in queue_name
+            or self.comparison.post_b.post_id in queue_name
+        )

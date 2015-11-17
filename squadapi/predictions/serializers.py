@@ -36,6 +36,8 @@ class HITSerializer(serializers.ModelSerializer):
 
 class InstagramPredictionSerializer(serializers.ModelSerializer):
 
+    contains_target = serializers.ReadOnlyField()
+
     class Meta:
         model = InstagramPrediction
         fields = (
@@ -46,5 +48,6 @@ class InstagramPredictionSerializer(serializers.ModelSerializer):
             'decision_milliseconds',
             'ux_id',
             'created_datetime',
+            'contains_target',
         )
         depth = 1
