@@ -11,8 +11,9 @@ logger = get_task_logger(__name__)
 
 @shared_task
 def update_turker_performance(turker):
-    hit = turker.hit_set.order_by('-created_datetime').first()
-    predictions = InstagramPrediction.objects.filter(hit=hit)
+    predictions = InstagramPrediction.objects.filter(
+        hit__in=turker.hit_set.all()
+    ).order_by('-created_datetime')[:300]
     correctness = mean(predictions.values_list('correct', flat=True))
 
     performance, created = TurkerPerformance.objects.get_or_create(
@@ -21,5 +22,5 @@ def update_turker_performance(turker):
     )
 
     if not created:
-        performance.correctness = sum(correct) / len(correct)
+        performance.correctness = correctness
         performance.save()
