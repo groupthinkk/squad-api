@@ -85,7 +85,7 @@ def update_hit_prediction(hit_id):
         upper_bound = likes_C
     elif B and C:
         lower_bound = likes_C
-        upper_bound = 10 ** 10
+        upper_bound = 10 ** 9
 
     instagram_post, created = InstagramPost.objects.get_or_create(
         post=target_post,
