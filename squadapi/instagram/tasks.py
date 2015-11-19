@@ -10,6 +10,8 @@ from collections import defaultdict
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
+from django.db import IntegrityError
+
 from .models import (
     User, Post, Normalization, PostComparison, PostComparisonQueueMember, Follow,
 )
@@ -161,7 +163,10 @@ def update_comparison_queue(user, queue, post_id):
                     queue=queue,
                     comparison=comparison,
                 )
-                member.save()
+                try:
+                    member.save()
+                except IntegrityError:
+                    pass
 
 
 @shared_task
