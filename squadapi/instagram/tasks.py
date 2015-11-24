@@ -23,21 +23,11 @@ from .collect import (
 logger = get_task_logger(__name__)
 
 
-HOT_15 = [
-    'patagonia',
+COMPARISON_ACCOUNTS = [
     'jcrew',
-    'gap',
     'hm',
-    'forever21',
-    'zara',
-    'nordstrom',
     'underarmour',
-    'americaneagle',
-    'topshop',
-    'tommyhilfiger',
     'levis',
-    'oldnavy',
-    'abercrombie',
     'ralphlauren',
 ]
 
@@ -129,7 +119,9 @@ def get_post_comparisons(user, post):
 
 @shared_task
 def update_comparison_queue(user, queue, post_id):
-    users = User.objects.filter(username__in=sample(HOT_15, 4))
+    accounts = [i for i in COMPARISON_ACCOUNTS if i != user.username]
+
+    users = User.objects.filter(username__in=sample(accounts, 4))
 
     for u in chain([user], users):
         update_user_posts(u, count=150)
