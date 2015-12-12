@@ -1,10 +1,12 @@
 apt-get update
 apt-get install -y python3-pip rabbitmq-server
-apt-get install -y libpq-dev postgresql-client
+apt-get install -y git libpq-dev postgresql-client
 sudo chown -R ubuntu:ubuntu /opt/
 
 mkdir /opt/virtualenvs
-cp -r /home/ubuntu/squad-api /opt/
+git clone git@github.com:groupthinkk/squad-api.git
+git checkout master
+git pull
 
 pip3 install virtualenvwrapper
 export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
