@@ -1,3 +1,5 @@
+#! /bin/bash
+
 apt-get update
 apt-get install -y python3-pip rabbitmq-server
 apt-get install -y git libpq-dev postgresql-client
