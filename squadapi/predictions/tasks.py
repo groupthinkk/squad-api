@@ -5,22 +5,26 @@ from celery.utils.log import get_task_logger
 
 from .models import TurkerPerformance, InstagramPrediction, HIT, InstagramPost
 
-
 logger = get_task_logger(__name__)
+
+N_PREDICTIONS = 180
 
 
 @shared_task
 def update_turker_performance(turker):
     predictions = InstagramPrediction.objects.filter(
         hit__in=turker.hit_set.all()
-    ).order_by('-created_datetime')[:300]
+    ).order_by('-created_datetime')[:N_PREDICTIONS]
 
-    correct = list(map(
-        lambda x: x.correct,
-        filter(lambda x: not x.contains_target, predictions),
-    ))
+    if predictions.count() < N_PREDICTIONS:
+        correctness = -1
+    else:
+        correct = list(map(
+            lambda x: x.correct,
+            filter(lambda x: not x.contains_target, predictions),
+        ))
 
-    correctness = correct.count(True) / len(correct)
+        correctness = correct.count(True) / len(correct)
 
     performance, created = TurkerPerformance.objects.get_or_create(
         turker=turker,
