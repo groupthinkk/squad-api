@@ -104,7 +104,7 @@ class PostComparisonQueueList(generics.ListCreateAPIView):
 
         serializer = PostComparisonQueueSerializer(queue)
 
-        return Response(1)
+        return Response(serializer.data)
 
 
 def _format_post(post):
