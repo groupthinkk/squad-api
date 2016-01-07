@@ -26,7 +26,7 @@ class Post(models.Model):
     post_id = models.CharField(max_length=64, unique=True)
     caption = models.TextField()
     image_url = models.URLField()
-    likes_count = models.IntegerField(default=0)
+    likes_count = models.IntegerField(default=0, db_index=True)
     comments_count = models.IntegerField(default=0)
     created_datetime = models.DateTimeField(db_index=True)
 

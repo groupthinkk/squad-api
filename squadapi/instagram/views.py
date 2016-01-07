@@ -3,6 +3,7 @@ import random
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from random import sample
 
 from django.shortcuts import render, get_object_or_404
 
@@ -22,6 +23,14 @@ from .tasks import update_comparison_queue
 API_KEYS = (
     'CazMCDN5G2SuFhET3BuXdLIW01PQxisNLwKRIw',
 )
+
+COMPARISON_ACCOUNTS = [
+    'jcrew',
+    'hm',
+    'underarmour',
+    'levis',
+    'ralphlauren',
+]
 
 
 class APIKeyPermission(BasePermission):
@@ -95,16 +104,27 @@ class PostComparisonQueueList(generics.ListCreateAPIView):
         if not post_id:
             return bad_request('Required parameter missing: post_id')
 
-        queue = PostComparisonQueue(
-            name='auto-{}'.format(post_id),
-        )
-        queue.save()
+        users = [user]
+        post_ids = [post_id]
+        for account in COMPARISON_ACCOUNTS:
+            user = User.objects.get(username=account)
+            random_posts = sample(list(Post.objects.all()), 2)
+            for random_post in random_posts:
+                post_ids.append(random_post.post_id)
+                users.append(user)
+        res_obj = []
+        for i in range(10):
+            queue = PostComparisonQueue(
+                name='auto-{}-{}'.format(post_id, i),
+            )
+            queue.save()
 
-        update_comparison_queue.delay(user, queue, post_id)
+            update_comparison_queue.delay(users, queue, post_ids)
 
-        serializer = PostComparisonQueueSerializer(queue)
+            serializer = PostComparisonQueueSerializer(queue)
+            res_obj.append(serializer.data)
 
-        return Response(1)
+        return Response(res_obj)
 
 
 def _format_post(post):

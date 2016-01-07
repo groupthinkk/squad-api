@@ -1,7 +1,7 @@
 import json
 
 from random import sample, randint
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from operator import attrgetter
 from itertools import product, chain
 from statistics import mean, stdev
@@ -116,50 +116,84 @@ def get_post_comparisons(user, post):
 
     return sorted(product(v1, v2, v3), key=minimize_time_of_day_error)[0]
 
+def create_comps(num_posts, num_bins, comps_per_bin):
+    # check if there are too many bins
+    if num_bins > num_posts:
+        return "Too many bins!"
+    # break points in the distribution
+    break_pts = [-1]
+    for i in range(0, num_bins - 1):
+        temp = (i + 1) * int(round(float(num_posts)/num_bins)) - 1
+        break_pts.append(temp)
+
+    # add the end point
+    break_pts.append(num_posts - 1)
+
+    # create a list of bins
+    bins = []
+    for i in range(0, len(break_pts) - 1):
+        temp = []
+        for j in range(break_pts[i] + 1, break_pts[i + 1] + 1):
+            temp.append(j)
+        bins.append(temp)
+        # check if the bins are large enough
+        if comps_per_bin > len(bins[i]):
+            return "Too many comparisons per bin!"
+
+    # create a list of comparisons
+    comps = []
+    for i in range(0, len(bins)):
+        for j in range(0, comps_per_bin):
+            # select a random element from the current bin
+            val = bins[i][randint(0, len(bins[i]) - 1)]
+            # add the value to the list
+            comps.append(val)
+            # remove the bin
+            bins[i].remove(val)
+
+    comps.sort()
+    return comps
+
+def new_queue(post_data, target_id, n_bins, comps_bin):
+
+    n_rows = len(post_data)
+    # create comparison indices
+    comps = create_comps(n_rows, n_bins, comps_bin)
+
+    # extract post ids
+    p_id = [post_data[i].post_id for i in comps]
+
+    return p_id
 
 @shared_task
-def update_comparison_queue(user, queue, post_id):
-    accounts = [i for i in COMPARISON_ACCOUNTS if i != user.username]
-
-    users = User.objects.filter(username__in=sample(accounts, 4))
-
-    for u in chain([user], users):
-        update_user_posts(u, count=150)
-
-        n = randint(1, 10)
-        sample_size = 3
-
-        if u == user:
+def update_comparison_queue(users, queue, post_ids):
+    for i in range(len(users)):
+        u = users[i]
+        target_id = post_ids[i]
+        #update_user_posts(u, count=150)
+        posts = Post.objects.filter(user=u).exclude(
+            created_datetime__gte=date.today()-timedelta(days=3)
+            ).exclude(
+            post_id = target_id
+            ).order_by(
+            'likes_count',
+        )
+        other_ids = new_queue(posts, target_id, 3, 1)
+        for other_id in other_ids:
+            post_a, post_b = sample(list(Post.objects.filter(post_id__in = [target_id, other_id])), 2)
+            comparison, _ = PostComparison.objects.get_or_create(
+                        post_a=post_a,
+                        post_b=post_b,
+                        defaults={'user': u},
+                    )
+            member = PostComparisonQueueMember(
+                queue=queue,
+                comparison=comparison,
+            )
             try:
-                post = Post.objects.get(post_id=post_id)
-            except Post.DoesNotExist:
-                return
-            posts = Post.objects.filter(user=u).order_by(
-                '-created_datetime',
-            )[n:n + 20:10]
-            posts = chain([post], posts)
-        else:
-            posts = Post.objects.filter(user=u).order_by(
-                '-created_datetime',
-            )[n:n + 30:10]
-
-        for target_post in posts:
-            for comparison_post in get_post_comparisons(u, target_post):
-                post_a, post_b = sample([target_post, comparison_post], 2)
-                comparison, _ = PostComparison.objects.get_or_create(
-                    post_a=post_a,
-                    post_b=post_b,
-                    defaults={'user': u},
-                )
-                member = PostComparisonQueueMember(
-                    queue=queue,
-                    comparison=comparison,
-                )
-                try:
-                    member.save()
-                except IntegrityError:
-                    pass
-
+                member.save()
+            except IntegrityError:
+                pass
 
 @shared_task
 def update_user_follows(user, depth=2):
