@@ -108,7 +108,7 @@ class PostComparisonQueueList(generics.ListCreateAPIView):
         post_ids = [post_id]
         for account in COMPARISON_ACCOUNTS:
             user = User.objects.get(username=account)
-            random_posts = sample(list(Post.objects.all()), 2)
+            random_posts = sample(list(Post.objects.exclude(post_id=post_id)), 2)
             for random_post in random_posts:
                 post_ids.append(random_post.post_id)
                 users.append(user)
